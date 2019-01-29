@@ -8,15 +8,15 @@ module Danger
     # @param devices: Array of deviecs you want to see (e.g. ["iphone4s", "ipadair"])
     # @param prefix_command: Prefix the `fastlane run appetize_viewing_url_generator` command with something
     #   this can be used to use `bundle exec`
-    def run(public_key: nil, languages: nil, devices: nil, prefix_command: nil)
+    def run(public_key: nil, versions: nil, devices: nil, prefix_command: nil)
       # since we fetch the URL from the output we don't need colors
       # this will only be changed in the danger sub-process
       fastlane_colors_env = "FASTLANE_DISABLE_COLORS"
       fastlane_colors_were_disabled = ENV.key?(fastlane_colors_env)
       ENV[fastlane_colors_env] = "true"
 
-      devices ||= %w(iphone4s iphone5s iphone6s iphone7 iphone6splus iphone7plus ipadair)
-      languages ||= ["en"]
+      devices ||= %w(iphone4s iphone5s iphone6s iphone7 iphone6splus iphone7plus ipadair iphonex)
+      versions ||= ["12.1"]
 
       prefix_command ||= ""
 
@@ -28,10 +28,10 @@ module Danger
 
       html = ""
       html << "<table>"
-      languages.each do |current_language|
+      versions.each do |current_version|
         html << "<tr>"
         html << "<td>"
-        html << "<b>#{current_language[0..1]}</b>"
+        html << "<b>#{current_version[0..1]}</b>"
         html << "</td>"
 
         devices.each do |current_device|
@@ -39,13 +39,14 @@ module Danger
 
           params = {
             public_key: public_key,
-            language: current_language,
-            device: current_device
+            os_version: current_version,
+            device: current_device,
+            base_url: 'http://nutmeg-del.herokuapp.com/appTester/appWrapper'
           }
           params[:launch_url] = deep_link if deep_link
           params_str = params.map { |k, v| "#{k}:\"#{v}\"" }.join(" ")
           url = Fastlane::Helper.backticks("#{prefix_command}fastlane run appetize_viewing_url_generator #{params_str}")
-          url = url.match(%r{Result:.*(https\:\/\/.*)})[1].strip
+          url = url.match(%r{Result:.*(http\:\/\/.*)})[1].strip
 
           html << "<a href='#{url}'>"
           html << "<p align='center'>"
@@ -81,13 +82,14 @@ module Danger
         ipadair2: "iPad Air 2",
         nexus5: "Nexus 5",
         nexus7: "Nexus 7",
-        nexus9: "Nexus 9"
+        nexus9: "Nexus 9",
+        iphonex: "iPhone X"
       }[str.to_sym] || str.to_s
     end
 
     def url_for_device(str)
       str = str.to_sym
-      host = "https://raw.githubusercontent.com/fastlane/fastlane/#{Fastlane::VERSION}/fastlane/lib/fastlane/actions/device_grid/assets/"
+      host = "http://nutmeg-del.herokuapp.com/iphoneScreens/"
       return {
         iphone4s: host + "iphone4s.png",
         iphone5s: host + "iphone5s.png",
@@ -95,10 +97,11 @@ module Danger
         iphone7: host + "iphone6s.png",
         iphone6s: host + "iphone6s.png",
         iphone6plus: host + "iphone6splus.png",
-        iphone7plus: host + "iphone6splus.png",
+        iphone7plus: host + "iphone7splus.png",
         iphone6splus: host + "iphone6splus.png",
         ipadair: host + "ipadair.png",
-        ipadair2: host + "ipadair.png"
+        ipadair2: host + "ipadair.png",
+        iphonex: host + "iphonex.png"
       }[str] || ""
     end
   end
